@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { HomeScreen } from '../screens/HomeScreen';
 import { SearchScreen } from '../screens/SearchScreen';
 import { LibraryScreen } from '../screens/LibraryScreen';
+import SpotifyTestScreen from '../screens/SpotifyTestScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -20,6 +21,8 @@ export const TabNavigator = () => {
             iconName = focused ? 'search' : 'search-outline';
           } else if (route.name === 'Library') {
             iconName = focused ? 'library' : 'library-outline';
+          } else if (route.name === 'API Test') {
+            iconName = focused ? 'code' : 'code-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -37,6 +40,7 @@ export const TabNavigator = () => {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Search" component={SearchScreen} />
       <Tab.Screen name="Library" component={LibraryScreen} />
+      <Tab.Screen name="API Test" component={SpotifyTestScreen} />
     </Tab.Navigator>
   );
 };
