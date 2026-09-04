@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import { Audio } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 
 export const usePlayerStore = create((set, get) => ({
-  sound: null,
+  player: null,
   currentTrack: null,
   isPlaying: false,
   position: 0,
@@ -16,39 +16,49 @@ export const usePlayerStore = create((set, get) => ({
   },
 
   playTrack: async (track) => {
-    const { sound: currentSound } = get();
+    let { player } = get();
     
-    if (currentSound) {
-      await currentSound.unloadAsync();
-    }
-
     try {
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        shouldPlayInBackground: true,
       });
 
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: track.audioUri },
-        { shouldPlay: true },
-        get().onPlaybackStatusUpdate
-      );
-
-      set({ sound, currentTrack: track, isPlaying: true });
+      if (!player) {
+        player = createAudioPlayer(track.audioUri);
+        // We simulate basic event listening if playbackStatusUpdate isn't available
+        // expo-audio uses player.addListener('playbackStatusUpdate', ...)
+        player.addListener('playbackStatusUpdate', (status) => {
+          set({
+            position: status.currentTime * 1000,
+            duration: status.duration * 1000,
+            isPlaying: status.playing,
+          });
+          if (status.didJustFinish) {
+             get().nextTrack();
+          }
+        });
+        set({ player });
+      } else {
+        player.replace(track.audioUri);
+      }
+      
+      player.play();
+      set({ currentTrack: track, isPlaying: true });
     } catch (error) {
       console.error('Error playing track:', error);
     }
   },
 
   togglePlayPause: async () => {
-    const { sound, isPlaying } = get();
-    if (!sound) return;
+    const { player, isPlaying } = get();
+    if (!player) return;
 
     if (isPlaying) {
-      await sound.pauseAsync();
+      player.pause();
       set({ isPlaying: false });
     } else {
-      await sound.playAsync();
+      player.play();
       set({ isPlaying: true });
     }
   },
@@ -72,23 +82,9 @@ export const usePlayerStore = create((set, get) => ({
   },
 
   seekTo: async (positionMillis) => {
-    const { sound } = get();
-    if (sound) {
-      await sound.setPositionAsync(positionMillis);
-    }
-  },
-
-  onPlaybackStatusUpdate: (status) => {
-    if (status.isLoaded) {
-      set({
-        position: status.positionMillis,
-        duration: status.durationMillis,
-        isPlaying: status.isPlaying,
-      });
-
-      if (status.didJustFinish) {
-        get().nextTrack();
-      }
+    const { player } = get();
+    if (player) {
+      await player.seekTo(positionMillis / 1000);
     }
   },
 }));

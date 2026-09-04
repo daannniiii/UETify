@@ -3,6 +3,7 @@ import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { TabNavigator } from './TabNavigator';
 import { PlayerModal } from '../screens/PlayerModal';
+import { MiniPlayer } from '../components/MiniPlayer';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,6 +26,7 @@ export const AppNavigator = () => {
           }} 
         />
       </Stack.Navigator>
+      <MiniPlayer />
     </NavigationContainer>
   );
 };
